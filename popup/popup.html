@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IG Unfollow Tracker</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span class="brand-name">IG Unfollow Tracker</span>
+    </div>
+    <button id="optionsBtn" class="icon-btn" title="Settings">⚙</button>
+  </header>
+
+  <div id="errorBanner" class="error-banner" hidden>
+    <span id="errorText"></span>
+    <button id="errorDismiss" class="link-btn">Dismiss</button>
+  </div>
+
+  <div id="setupNotice" class="setup-notice" hidden>
+    <p>Set your Instagram username in <a id="setupOptionsLink" href="#">Settings</a> to start tracking.</p>
+  </div>
+
+  <section class="overview">
+    <div class="overview-row">
+      <div class="stat">
+        <div class="stat-value" id="followerCount">–</div>
+        <div class="stat-label">Followers</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="followingCount">–</div>
+        <div class="stat-label">Following</div>
+      </div>
+    </div>
+    <div class="meta-row">
+      <span id="lastCheckText">Last check: never</span>
+      <button id="checkNowBtn" class="primary-btn">Check now</button>
+    </div>
+  </section>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="lost">Unfollowed you</button>
+    <button class="tab" data-tab="newFollowers">New followers</button>
+    <button class="tab" data-tab="lostFollowing">You unfollowed</button>
+    <button class="tab" data-tab="newFollowing">New follows</button>
+    <button class="tab" data-tab="notBack">Not following back</button>
+    <button class="tab" data-tab="history">History</button>
+  </nav>
+
+  <main class="content">
+    <div id="panel-lost" class="panel active">
+      <ul class="user-list" id="list-lost"></ul>
+      <p class="empty-state" id="empty-lost">No changes yet — run a check to get started.</p>
+    </div>
+    <div id="panel-newFollowers" class="panel">
+      <ul class="user-list" id="list-newFollowers"></ul>
+      <p class="empty-state" id="empty-newFollowers">No new followers since last check.</p>
+    </div>
+    <div id="panel-lostFollowing" class="panel">
+      <ul class="user-list" id="list-lostFollowing"></ul>
+      <p class="empty-state" id="empty-lostFollowing">You haven't unfollowed anyone since last check.</p>
+    </div>
+    <div id="panel-newFollowing" class="panel">
+      <ul class="user-list" id="list-newFollowing"></ul>
+      <p class="empty-state" id="empty-newFollowing">No new follows since last check.</p>
+    </div>
+    <div id="panel-notBack" class="panel">
+      <ul class="user-list" id="list-notBack"></ul>
+      <p class="empty-state" id="empty-notBack">Everyone you follow follows you back.</p>
+    </div>
+    <div id="panel-history" class="panel">
+      <input type="text" id="historySearch" class="search-input" placeholder="Filter by username…" />
+      <ul class="history-list" id="historyList"></ul>
+      <p class="empty-state" id="empty-history">No history yet.</p>
+    </div>
+  </main>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
