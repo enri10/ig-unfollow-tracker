@@ -48,6 +48,23 @@ If something has changed, the popup will surface a clear error (see below)
 rather than silently showing wrong data — `lib/instagramApi.js` is written to
 fail loudly on unexpected response shapes.
 
+## Why the follower count might be off by a handful from Instagram's own page
+
+The number in the popup is a count of accounts this extension actually
+enumerated via Instagram's followers/following list endpoint — the same list
+the "unfollowed you" diffing is based on. Instagram's own profile page shows
+a separate header count, and the two can legitimately disagree by a small
+number (in practice usually 1–2), because the list endpoint can quietly omit
+accounts that the header count still includes — e.g. restricted, flagged, or
+pending-removal accounts — or because a follow/unfollow landed in the few
+seconds while a check was mid-run. If the popup's numbers don't match what
+you see on instagram.com, that's expected drift, not necessarily a bug: the
+popup shows both numbers side by side (an "ℹ️ Instagram shows X, we counted
+Y" note under the stats) whenever they differ, so it's visible rather than
+silently wrong. It's *not* a sign the "unfollowed you" list itself is
+missing anyone — that diff always runs against the actual enumerated list,
+not the header count.
+
 ## What it tracks
 
 - **Unfollowed you** — people who were following you last check but aren't now (the main feature).

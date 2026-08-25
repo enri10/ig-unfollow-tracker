@@ -24,6 +24,7 @@ const els = {
   setupOptionsLink: document.getElementById("setupOptionsLink"),
   followerCount: document.getElementById("followerCount"),
   followingCount: document.getElementById("followingCount"),
+  countMismatchNote: document.getElementById("countMismatchNote"),
   lastCheckText: document.getElementById("lastCheckText"),
   checkNowBtn: document.getElementById("checkNowBtn"),
   tabs: document.getElementById("tabs"),
@@ -177,6 +178,36 @@ function renderHistory(diffs) {
   }
 }
 
+/**
+ * The count shown above ("Followers"/"Following") is the number of accounts
+ * this extension actually enumerated via Instagram's list endpoint — the
+ * same number the diffing logic uses. Instagram's own header count on your
+ * profile can legitimately be off by a handful from that (restricted or
+ * flagged accounts, a pending removal, or a follow/unfollow landing mid-check
+ * — see the README). This is a heads-up, not necessarily a bug in the list
+ * itself: the new/lost-follower detection above is based on the enumerated
+ * list either way, so it's unaffected by which number Instagram's UI shows.
+ */
+function renderCountMismatchNote(diff) {
+  if (!diff) {
+    els.countMismatchNote.hidden = true;
+    return;
+  }
+  const notes = [];
+  if (diff.reportedFollowerCount != null && diff.reportedFollowerCount !== diff.followerCount) {
+    notes.push(`Instagram shows ${diff.reportedFollowerCount} followers, we counted ${diff.followerCount}`);
+  }
+  if (diff.reportedFollowingCount != null && diff.reportedFollowingCount !== diff.followingCount) {
+    notes.push(`Instagram shows ${diff.reportedFollowingCount} following, we counted ${diff.followingCount}`);
+  }
+  if (notes.length === 0) {
+    els.countMismatchNote.hidden = true;
+    return;
+  }
+  els.countMismatchNote.textContent = `ℹ️ ${notes.join(" · ")} — normal Instagram drift, not a bug (see README).`;
+  els.countMismatchNote.hidden = false;
+}
+
 function showError(error) {
   if (!error) {
     els.errorBanner.hidden = true;
@@ -202,6 +233,7 @@ async function loadAndRender() {
 
   els.followerCount.textContent = latestDiff ? latestDiff.followerCount : "–";
   els.followingCount.textContent = latestDiff ? latestDiff.followingCount : "–";
+  renderCountMismatchNote(latestDiff);
 
   renderList("lost", latestDiff?.lostFollowers);
   renderList("newFollowers", latestDiff?.newFollowers);

@@ -127,6 +127,15 @@ body {
   margin-top: 2px;
 }
 
+.count-mismatch-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin: 0 0 10px;
+}
+
 .meta-row {
   display: flex;
   align-items: center;
