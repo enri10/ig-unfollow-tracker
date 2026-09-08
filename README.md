@@ -98,6 +98,14 @@ The popup shows a banner for these states instead of failing silently:
 - **Not logged in** → log into instagram.com in this browser, then retry.
 - **Challenge required** → Instagram wants extra verification; resolve it on
   instagram.com, then click Check now again.
-- **Rate limited** → wait; it'll retry automatically.
+- **Rate limited** → this is Instagram's own server-side cooldown on this
+  session (usually from checking too often — repeated manual "Check now"
+  clicks in a short window is the most common cause), not a stuck state in
+  the extension, so there's nothing to "reset" past it. Retrying before the
+  cooldown lifts just extends it, or in the worst case escalates to a
+  checkpoint challenge on the account. The popup shows the time of the next
+  automatic retry; the extension backs off on its own (15 min, then 30, 60,
+  120, up to 240 min for repeated 429s) rather than hammering it, and resets
+  back to normal the moment a check succeeds. Just wait it out.
 - **Unexpected response** → the endpoint shape likely changed; see the
   reconnaissance steps above.

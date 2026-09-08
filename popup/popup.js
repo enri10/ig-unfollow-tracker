@@ -208,12 +208,27 @@ function renderCountMismatchNote(diff) {
   els.countMismatchNote.hidden = false;
 }
 
-function showError(error) {
+/**
+ * A 429 is Instagram itself throttling this session — not a stuck local
+ * flag — so there's nothing to "reset" here that would actually help.
+ * Retrying (manually or automatically) before Instagram's own cooldown
+ * passes just extends the block, so we show a concrete countdown instead of
+ * a vague "try again later", and the extension already backs off on its own
+ * (see lib/scheduler.js) rather than hammering it.
+ */
+function showError(error, state) {
   if (!error) {
     els.errorBanner.hidden = true;
     return;
   }
-  els.errorText.textContent = ERROR_MESSAGES[error.type] || error.message || FALLBACK_ERROR_MESSAGE;
+  if (error.type === "RATE_LIMITED" && state?.nextRetryAt) {
+    const when = formatDateTime(state.nextRetryAt);
+    els.errorText.textContent =
+      `Instagram is rate-limiting this session — this is Instagram's own cooldown, not something the extension can reset past. ` +
+      `It'll retry automatically around ${when}. Clicking "Check now" before then risks extending the block, so it's best to just wait.`;
+  } else {
+    els.errorText.textContent = ERROR_MESSAGES[error.type] || error.message || FALLBACK_ERROR_MESSAGE;
+  }
   els.errorBanner.hidden = false;
 }
 
@@ -226,7 +241,7 @@ async function loadAndRender() {
   ]);
 
   els.setupNotice.hidden = Boolean(settings.username);
-  showError(state.lastError);
+  showError(state.lastError, state);
   els.lastCheckText.textContent = `Last check: ${formatDateTime(state.lastCheck)}`;
   els.checkNowBtn.disabled = Boolean(state.isCheckRunning);
   els.checkNowBtn.textContent = state.isCheckRunning ? "Checking…" : "Check now";
