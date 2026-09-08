@@ -1,5 +1,5 @@
 import * as storage from "../lib/storage.js";
-import { formatDateTime, formatDate, formatRelativeDay } from "../lib/utils.js";
+import { formatDateTime, formatDate, formatRelativeDay, formatTime, MIN_CHECK_INTERVAL_MINUTES } from "../lib/utils.js";
 
 const ERROR_MESSAGES = {
   NOT_LOGGED_IN: "You're not logged into Instagram in this browser. Log in at instagram.com, then try again.",
@@ -243,8 +243,21 @@ async function loadAndRender() {
   els.setupNotice.hidden = Boolean(settings.username);
   showError(state.lastError, state);
   els.lastCheckText.textContent = `Last check: ${formatDateTime(state.lastCheck)}`;
-  els.checkNowBtn.disabled = Boolean(state.isCheckRunning);
-  els.checkNowBtn.textContent = state.isCheckRunning ? "Checking…" : "Check now";
+
+  // Minimum-gap cooldown: a hard floor, not just a suggestion, so repeated
+  // clicking can't itself look like automated abuse to Instagram (see
+  // lib/scheduler.js — this mirrors what it actually enforces).
+  const cooldownUntil = !state.partialRun && state.lastCheck
+    ? state.lastCheck + MIN_CHECK_INTERVAL_MINUTES * 60 * 1000
+    : 0;
+  const inCooldown = Date.now() < cooldownUntil;
+
+  els.checkNowBtn.disabled = Boolean(state.isCheckRunning) || inCooldown;
+  els.checkNowBtn.textContent = state.isCheckRunning
+    ? "Checking…"
+    : inCooldown
+      ? `Available at ${formatTime(cooldownUntil)}`
+      : "Check now";
 
   els.followerCount.textContent = latestDiff ? latestDiff.followerCount : "–";
   els.followingCount.textContent = latestDiff ? latestDiff.followingCount : "–";

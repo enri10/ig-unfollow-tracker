@@ -91,6 +91,14 @@ your own session. Use **Settings → Export data as JSON** to back it up, or
   errors rather than retrying hard, but there's no guarantee against this.
 - Large accounts (thousands of followers) take longer to check due to
   deliberate pacing between pages — this is intentional, not a bug.
+- **A new check (manual "Check now" included) can't start more than once
+  every 30 minutes** (`MIN_CHECK_INTERVAL_MINUTES` in `lib/utils.js`) — the
+  button just disables and shows when it'll be available again. This is a
+  hard floor, not a suggestion: repeated checks in a short window is exactly
+  the pattern that gets flagged as automated/suspicious behavior on the
+  account (this happened during development of this extension — Instagram
+  sent an "unusual activity" warning after a burst of manual test checks).
+  Once a day, from the scheduled alarm, is the intended normal cadence.
 
 ## Troubleshooting
 
