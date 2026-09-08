@@ -41,6 +41,12 @@ const LIST_TABS = {
   notBack: "notFollowingBack",
 };
 
+// Tabs that only have data when settings.trackFollowing is on (see options).
+// Cached across loadAndRender calls so the history search handler, which
+// re-renders independently, can use the same value without refetching settings.
+const FOLLOWING_ONLY_TABS = ["lostFollowing", "newFollowing", "notBack"];
+let trackFollowingEnabled = false;
+
 /**
  * @param {object} user
  * @param {string} [caption] - overrides the second line (defaults to fullName).
@@ -149,8 +155,13 @@ function renderHistory(diffs) {
     date.textContent = `${formatRelativeDay(diff.generatedAt)} — ${formatDateTime(diff.generatedAt)}`;
     const summary = document.createElement("div");
     summary.className = "history-summary";
-    summary.textContent = `+${diff.newFollowers.length} / -${diff.lostFollowers.length} followers · ` +
-      `+${diff.newFollowing.length} / -${diff.lostFollowing.length} following`;
+    // Omit the following half entirely when it isn't tracked — "+0 / -0
+    // following" would misleadingly read as "checked, no changes" rather
+    // than "not tracked at all".
+    summary.textContent = trackFollowingEnabled
+      ? `+${diff.newFollowers.length} / -${diff.lostFollowers.length} followers · ` +
+        `+${diff.newFollowing.length} / -${diff.lostFollowing.length} following`
+      : `+${diff.newFollowers.length} / -${diff.lostFollowers.length} followers`;
     dateWrap.append(date, summary);
 
     const chevron = document.createElement("span");
@@ -232,6 +243,27 @@ function showError(error, state) {
   els.errorBanner.hidden = false;
 }
 
+/**
+ * Hide the tabs (and their panels) that only ever have data when
+ * settings.trackFollowing is on — off by default, see options.js. Falls
+ * back to the "Unfollowed you" tab if the currently-active one just got
+ * hidden out from under the user (e.g. they turned the setting off while
+ * "New follows" was selected).
+ */
+function applyFeatureVisibility(trackFollowing) {
+  let activeTabHidden = false;
+  for (const key of FOLLOWING_ONLY_TABS) {
+    const btn = els.tabs.querySelector(`.tab[data-tab="${key}"]`);
+    const panel = document.getElementById(`panel-${key}`);
+    if (btn) {
+      btn.hidden = !trackFollowing;
+      if (!trackFollowing && btn.classList.contains("active")) activeTabHidden = true;
+    }
+    if (panel) panel.hidden = !trackFollowing;
+  }
+  if (activeTabHidden) switchTab("lost");
+}
+
 async function loadAndRender() {
   const [settings, state, [latestDiff], historyDiffs] = await Promise.all([
     storage.getSettings(),
@@ -239,6 +271,9 @@ async function loadAndRender() {
     storage.getDiffHistory({ limit: 1 }),
     storage.getDiffHistory({ limit: 50 }),
   ]);
+
+  trackFollowingEnabled = Boolean(settings.trackFollowing);
+  applyFeatureVisibility(trackFollowingEnabled);
 
   els.setupNotice.hidden = Boolean(settings.username);
   showError(state.lastError, state);

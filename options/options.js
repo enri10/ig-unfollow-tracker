@@ -3,7 +3,7 @@ import * as storage from "../lib/storage.js";
 const els = {
   username: document.getElementById("username"),
   notificationsEnabled: document.getElementById("notificationsEnabled"),
-  trackNotFollowingBack: document.getElementById("trackNotFollowingBack"),
+  trackFollowing: document.getElementById("trackFollowing"),
   snapshotRetentionDays: document.getElementById("snapshotRetentionDays"),
   diffRetentionDays: document.getElementById("diffRetentionDays"),
   saveBtn: document.getElementById("saveBtn"),
@@ -17,7 +17,7 @@ async function load() {
   const settings = await storage.getSettings();
   els.username.value = settings.username || "";
   els.notificationsEnabled.checked = settings.notificationsEnabled;
-  els.trackNotFollowingBack.checked = settings.trackNotFollowingBack;
+  els.trackFollowing.checked = settings.trackFollowing;
   els.snapshotRetentionDays.value = settings.snapshotRetentionDays;
   els.diffRetentionDays.value = settings.diffRetentionDays;
 }
@@ -27,7 +27,7 @@ async function save() {
   await storage.setSettings({
     username,
     notificationsEnabled: els.notificationsEnabled.checked,
-    trackNotFollowingBack: els.trackNotFollowingBack.checked,
+    trackFollowing: els.trackFollowing.checked,
     snapshotRetentionDays: Number(els.snapshotRetentionDays.value) || 21,
     diffRetentionDays: Number(els.diffRetentionDays.value) || 180,
   });

@@ -1,8 +1,12 @@
 # IG Unfollow Tracker
 
 A Chrome (Manifest V3) extension that tracks who unfollows you on Instagram, by
-taking a daily snapshot of your followers/following and diffing it against the
-previous one.
+taking a daily snapshot of your followers and diffing it against the previous
+one — automatically, once a day, notifying you only if someone unfollowed.
+That's the whole default feature set, kept deliberately minimal: fewer
+requests to Instagram per check means less risk of it looking like automated
+abuse. Tracking who *you* follow (new follows, unfollows, not-following-back)
+is available but off by default — see Settings.
 
 **It never asks for your Instagram password.** It reads data through your
 browser's *existing* Instagram session — the same cookies already present
@@ -67,10 +71,16 @@ not the header count.
 
 ## What it tracks
 
-- **Unfollowed you** — people who were following you last check but aren't now (the main feature).
-- **New followers** / **You unfollowed** / **New follows**.
-- **Not following back** (optional, toggle in Settings) — people you follow who don't follow you.
+By default, just your followers list:
+- **Unfollowed you** — people who were following you last check but aren't now (the main feature — this is all that's on by default).
+- **New followers** — comes along for free from the same fetch.
 - **History** — a searchable log of every past check's changes.
+
+Turning on **Also track who I follow** in Settings additionally fetches your
+*following* list (a second full paginated fetch, roughly doubling requests
+per check) and unlocks:
+- **You unfollowed** / **New follows**.
+- **Not following back** — people you follow who don't follow you.
 
 ## Data & privacy
 

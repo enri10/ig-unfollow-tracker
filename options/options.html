@@ -29,9 +29,16 @@
 
   <section class="field-group">
     <label class="checkbox-label">
-      <input type="checkbox" id="trackNotFollowingBack" />
-      Track accounts I follow that don't follow me back
+      <input type="checkbox" id="trackFollowing" />
+      Also track who I follow (new follows, unfollows, not-following-back)
     </label>
+    <p class="hint">
+      Off by default. Checking your followers is all that's needed to know who
+      unfollowed you; this adds a second full paginated fetch of your
+      <em>following</em> list on top of that, roughly doubling the number of
+      requests made per check — leave it off unless you actually want those
+      extra lists.
+    </p>
   </section>
 
   <section class="field-group">
