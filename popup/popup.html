@@ -72,9 +72,13 @@
       <p class="empty-state" id="empty-notBack">Everyone you follow follows you back.</p>
     </div>
     <div id="panel-history" class="panel">
+      <div class="section-label">Change history (successful checks only)</div>
       <input type="text" id="historySearch" class="search-input" placeholder="Filter by username…" />
       <ul class="history-list" id="historyList"></ul>
       <p class="empty-state" id="empty-history">No history yet.</p>
+
+      <div class="section-label attempt-log-label">Recent check attempts (incl. failed/skipped)</div>
+      <div id="attemptLog" class="attempt-log"></div>
     </div>
   </main>
 

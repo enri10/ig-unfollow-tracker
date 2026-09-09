@@ -125,5 +125,22 @@ The popup shows a banner for these states instead of failing silently:
   automatic retry; the extension backs off on its own (15 min, then 30, 60,
   120, up to 240 min for repeated 429s) rather than hammering it, and resets
   back to normal the moment a check succeeds. Just wait it out.
+  If it keeps happening — 3 consecutive 429s even after backing off each
+  time (`RATE_LIMIT_CIRCUIT_BREAKER_THRESHOLD` in `lib/scheduler.js`) — the
+  automatic resume-alarm loop stops entirely rather than keep escalating,
+  and defers to the next once-a-day scheduled check instead. This is a real
+  scenario, not hypothetical: it happened during development, recurring a
+  full day after the first warning, which is what prompted adding this.
 - **Unexpected response** → the endpoint shape likely changed; see the
   reconnaissance steps above.
+
+## Where to see what it actually did
+
+- **Overview → "Last check"** is the last time a check *succeeded*.
+- **History tab** lists every successful check's diff — searchable by
+  username. If a day is missing here, the check never actually completed
+  that day (most likely: it kept hitting a rate limit).
+- **History tab → "Recent check attempts"** logs the last 20 attempts
+  regardless of outcome (success, skipped, or failed, with why, and whether
+  it was manual or automatic) — this is the place to look when checks are
+  failing and there's nothing new in the change history to explain why.

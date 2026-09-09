@@ -1,5 +1,6 @@
 import * as storage from "../lib/storage.js";
 import { formatDateTime, formatDate, formatRelativeDay, formatTime, MIN_CHECK_INTERVAL_MINUTES } from "../lib/utils.js";
+import { DAILY_ALARM } from "../lib/scheduler.js";
 
 const ERROR_MESSAGES = {
   NOT_LOGGED_IN: "You're not logged into Instagram in this browser. Log in at instagram.com, then try again.",
@@ -31,6 +32,7 @@ const els = {
   historySearch: document.getElementById("historySearch"),
   historyList: document.getElementById("historyList"),
   emptyHistory: document.getElementById("empty-history"),
+  attemptLog: document.getElementById("attemptLog"),
 };
 
 const LIST_TABS = {
@@ -227,12 +229,20 @@ function renderCountMismatchNote(diff) {
  * a vague "try again later", and the extension already backs off on its own
  * (see lib/scheduler.js) rather than hammering it.
  */
-function showError(error, state) {
+function showError(error, state, dailyAlarmAt) {
   if (!error) {
     els.errorBanner.hidden = true;
     return;
   }
-  if (error.type === "RATE_LIMITED" && state?.nextRetryAt) {
+  if (error.type === "RATE_LIMITED" && state?.autoRetryPaused) {
+    // Repeated 429s even after backing off (see lib/scheduler.js's circuit
+    // breaker) — stop implying an imminent auto-retry that isn't coming.
+    const when = dailyAlarmAt ? formatDateTime(dailyAlarmAt) : "tomorrow's scheduled check";
+    els.errorText.textContent =
+      `Instagram has rate-limited this session repeatedly, even after waiting longer each time. ` +
+      `Automatic retries are now paused rather than keep trying — the next attempt will be the regular once-daily check, around ${when}. ` +
+      `You can still click "Check now" yourself, but doing that again right now carries real risk of extending the block further.`;
+  } else if (error.type === "RATE_LIMITED" && state?.nextRetryAt) {
     const when = formatDateTime(state.nextRetryAt);
     els.errorText.textContent =
       `Instagram is rate-limiting this session — this is Instagram's own cooldown, not something the extension can reset past. ` +
@@ -264,19 +274,79 @@ function applyFeatureVisibility(trackFollowing) {
   if (activeTabHidden) switchTab("lost");
 }
 
+const ATTEMPT_OUTCOME_LABEL = {
+  success: "✅ Checked successfully",
+  error: "⚠️ Failed",
+  skipped: "⏭️ Skipped",
+};
+
+const ATTEMPT_ERROR_LABEL = {
+  NOT_LOGGED_IN: "not logged in",
+  CHALLENGE_REQUIRED: "challenge required",
+  RATE_LIMITED: "rate limited",
+  NETWORK_ERROR: "network error",
+  UNEXPECTED_RESPONSE: "unexpected response",
+  UNKNOWN_ERROR: "error",
+};
+
+const ATTEMPT_SKIP_LABEL = {
+  "already-running": "already running",
+  "too-soon": "cooldown active",
+};
+
+/**
+ * "Where can I see the last run?" — this is that: every check attempt
+ * (success, skip, or failure), not just successful ones. The History tab
+ * only ever gets entries from successful checks, so a string of rate-limit
+ * failures would otherwise be completely invisible.
+ */
+function attemptLine(entry) {
+  const label = ATTEMPT_OUTCOME_LABEL[entry.outcome] || entry.outcome;
+  let detail = "";
+  if (entry.outcome === "error") {
+    detail = ` (${ATTEMPT_ERROR_LABEL[entry.errorType] || entry.errorType})`;
+  } else if (entry.outcome === "skipped") {
+    detail = ` (${ATTEMPT_SKIP_LABEL[entry.reason] || entry.reason})`;
+  } else if (entry.outcome === "success" && entry.lostFollowerCount > 0) {
+    detail = ` — ${entry.lostFollowerCount} unfollowed you`;
+  }
+  const trigger = entry.manual ? "manual" : "automatic";
+  return `${formatDateTime(entry.at)} · ${label}${detail} (${trigger})`;
+}
+
+function renderAttemptLog(entries) {
+  if (!els.attemptLog) return;
+  els.attemptLog.innerHTML = "";
+  if (!entries || entries.length === 0) {
+    els.attemptLog.textContent = "No check attempts yet.";
+    return;
+  }
+  const ul = document.createElement("ul");
+  ul.className = "attempt-log-list";
+  for (const entry of entries) {
+    const li = document.createElement("li");
+    li.textContent = attemptLine(entry);
+    ul.appendChild(li);
+  }
+  els.attemptLog.appendChild(ul);
+}
+
 async function loadAndRender() {
-  const [settings, state, [latestDiff], historyDiffs] = await Promise.all([
+  const [settings, state, [latestDiff], historyDiffs, attemptLog, dailyAlarm] = await Promise.all([
     storage.getSettings(),
     storage.getState(),
     storage.getDiffHistory({ limit: 1 }),
     storage.getDiffHistory({ limit: 50 }),
+    storage.getAttemptLog(),
+    chrome.alarms.get(DAILY_ALARM),
   ]);
 
   trackFollowingEnabled = Boolean(settings.trackFollowing);
   applyFeatureVisibility(trackFollowingEnabled);
 
   els.setupNotice.hidden = Boolean(settings.username);
-  showError(state.lastError, state);
+  showError(state.lastError, state, dailyAlarm?.scheduledTime);
+  renderAttemptLog(attemptLog);
   els.lastCheckText.textContent = `Last check: ${formatDateTime(state.lastCheck)}`;
 
   // Minimum-gap cooldown: a hard floor, not just a suggestion, so repeated

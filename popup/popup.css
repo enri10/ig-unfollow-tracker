@@ -325,3 +325,34 @@ body {
 .history-bucket .user-row {
   padding: 5px 0;
 }
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 4px 0 6px;
+}
+.attempt-log-label {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.attempt-log {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.attempt-log-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.attempt-log-list li {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.attempt-log-list li:last-child {
+  border-bottom: none;
+}
