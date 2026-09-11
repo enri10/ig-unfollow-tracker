@@ -131,6 +131,28 @@ The popup shows a banner for these states instead of failing silently:
   and defers to the next once-a-day scheduled check instead. This is a real
   scenario, not hypothetical: it happened during development, recurring a
   full day after the first warning, which is what prompted adding this.
+  If it recurs for **days**, that's no longer a normal temporary throttle —
+  see "Pausing checks entirely" below.
+
+## Pausing checks entirely
+
+If a rate limit keeps recurring day after day (check "Recent check
+attempts" in the popup's History tab to confirm it's genuinely still
+failing, not just an old error message), that's a sign the account needs a
+longer, completely uninterrupted rest than the automatic once-daily backoff
+alone provides — every automatic retry, even spaced a day apart, is still a
+request against an account that may be under a longer-than-usual hold.
+
+**Pause checks** — in the popup (a link under "Check now") or Settings (a
+checkbox at the top) — stops *everything*: no automatic alarm, and even a
+manual "Check now" click is refused. Nothing is sent to Instagram at all
+until you uncheck it. This is distinct from the automatic backoff/circuit
+breaker above: those still send a request once a day; pausing sends none.
+
+Also worth doing alongside pausing: check instagram.com directly (not
+through the extension) for any pending "Confirm it's you" / unusual-activity
+verification prompt. If one exists, waiting or pausing this extension won't
+resolve it — only completing that prompt yourself, on Instagram, will.
 - **Unexpected response** → the endpoint shape likely changed; see the
   reconnaissance steps above.
 

@@ -1,6 +1,6 @@
 import * as storage from "../lib/storage.js";
 import { formatDateTime, formatDate, formatRelativeDay, formatTime, MIN_CHECK_INTERVAL_MINUTES } from "../lib/utils.js";
-import { DAILY_ALARM } from "../lib/scheduler.js";
+import { DAILY_ALARM, setChecksPaused } from "../lib/scheduler.js";
 
 const ERROR_MESSAGES = {
   NOT_LOGGED_IN: "You're not logged into Instagram in this browser. Log in at instagram.com, then try again.",
@@ -18,6 +18,9 @@ const FALLBACK_ERROR_MESSAGE = "Something went wrong.";
 
 const els = {
   optionsBtn: document.getElementById("optionsBtn"),
+  pausedBanner: document.getElementById("pausedBanner"),
+  resumeChecksBtn: document.getElementById("resumeChecksBtn"),
+  pauseChecksBtn: document.getElementById("pauseChecksBtn"),
   errorBanner: document.getElementById("errorBanner"),
   errorText: document.getElementById("errorText"),
   errorDismiss: document.getElementById("errorDismiss"),
@@ -292,6 +295,7 @@ const ATTEMPT_ERROR_LABEL = {
 const ATTEMPT_SKIP_LABEL = {
   "already-running": "already running",
   "too-soon": "cooldown active",
+  paused: "checks paused",
 };
 
 /**
@@ -344,8 +348,17 @@ async function loadAndRender() {
   trackFollowingEnabled = Boolean(settings.trackFollowing);
   applyFeatureVisibility(trackFollowingEnabled);
 
+  const paused = Boolean(settings.checksPaused);
+  els.pausedBanner.hidden = !paused;
+  els.pauseChecksBtn.hidden = paused;
+  // The paused banner already says everything that matters; showing the
+  // (likely stale, pre-pause) error banner underneath it too is just noise.
+  if (!paused) {
+    showError(state.lastError, state, dailyAlarm?.scheduledTime);
+  } else {
+    els.errorBanner.hidden = true;
+  }
   els.setupNotice.hidden = Boolean(settings.username);
-  showError(state.lastError, state, dailyAlarm?.scheduledTime);
   renderAttemptLog(attemptLog);
   els.lastCheckText.textContent = `Last check: ${formatDateTime(state.lastCheck)}`;
 
@@ -357,12 +370,14 @@ async function loadAndRender() {
     : 0;
   const inCooldown = Date.now() < cooldownUntil;
 
-  els.checkNowBtn.disabled = Boolean(state.isCheckRunning) || inCooldown;
-  els.checkNowBtn.textContent = state.isCheckRunning
-    ? "Checking…"
-    : inCooldown
-      ? `Available at ${formatTime(cooldownUntil)}`
-      : "Check now";
+  els.checkNowBtn.disabled = paused || Boolean(state.isCheckRunning) || inCooldown;
+  els.checkNowBtn.textContent = paused
+    ? "Paused"
+    : state.isCheckRunning
+      ? "Checking…"
+      : inCooldown
+        ? `Available at ${formatTime(cooldownUntil)}`
+        : "Check now";
 
   els.followerCount.textContent = latestDiff ? latestDiff.followerCount : "–";
   els.followingCount.textContent = latestDiff ? latestDiff.followingCount : "–";
@@ -413,6 +428,15 @@ els.tabs.addEventListener("click", (e) => {
 });
 
 els.checkNowBtn.addEventListener("click", handleCheckNow);
+
+els.pauseChecksBtn.addEventListener("click", async () => {
+  await setChecksPaused(true);
+  await loadAndRender();
+});
+els.resumeChecksBtn.addEventListener("click", async () => {
+  await setChecksPaused(false);
+  await loadAndRender();
+});
 
 els.optionsBtn.addEventListener("click", () => chrome.runtime.openOptionsPage());
 els.setupOptionsLink.addEventListener("click", (e) => {

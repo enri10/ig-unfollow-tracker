@@ -28,6 +28,13 @@ h2 {
   margin: 18px 0;
 }
 
+.pause-section {
+  background: #eef1f5;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 0;
+}
+
 label {
   display: block;
   font-weight: 600;

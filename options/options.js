@@ -1,7 +1,9 @@
 import * as storage from "../lib/storage.js";
+import { setChecksPaused } from "../lib/scheduler.js";
 
 const els = {
   username: document.getElementById("username"),
+  checksPaused: document.getElementById("checksPaused"),
   notificationsEnabled: document.getElementById("notificationsEnabled"),
   trackFollowing: document.getElementById("trackFollowing"),
   snapshotRetentionDays: document.getElementById("snapshotRetentionDays"),
@@ -16,6 +18,7 @@ const els = {
 async function load() {
   const settings = await storage.getSettings();
   els.username.value = settings.username || "";
+  els.checksPaused.checked = settings.checksPaused;
   els.notificationsEnabled.checked = settings.notificationsEnabled;
   els.trackFollowing.checked = settings.trackFollowing;
   els.snapshotRetentionDays.value = settings.snapshotRetentionDays;
@@ -70,6 +73,13 @@ async function handleClear() {
     els.savedNote.textContent = "Saved ✓";
   }, 2000);
 }
+
+// Takes effect immediately (syncs alarms via setChecksPaused), rather than
+// waiting for "Save" — this is safety-critical enough that it shouldn't be
+// possible to check the box and then forget to hit Save.
+els.checksPaused.addEventListener("change", async () => {
+  await setChecksPaused(els.checksPaused.checked);
+});
 
 els.saveBtn.addEventListener("click", save);
 els.exportBtn.addEventListener("click", exportData);

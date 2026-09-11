@@ -14,6 +14,11 @@
     <button id="optionsBtn" class="icon-btn" title="Settings">⚙</button>
   </header>
 
+  <div id="pausedBanner" class="paused-banner" hidden>
+    <p>⏸ Checks are paused — no requests are being sent to Instagram, automatic or manual, until you resume.</p>
+    <button id="resumeChecksBtn" class="secondary-btn">Resume checks</button>
+  </div>
+
   <div id="errorBanner" class="error-banner" hidden>
     <span id="errorText"></span>
     <button id="errorDismiss" class="link-btn">Dismiss</button>
@@ -39,6 +44,7 @@
       <span id="lastCheckText">Last check: never</span>
       <button id="checkNowBtn" class="primary-btn">Check now</button>
     </div>
+    <button id="pauseChecksBtn" class="link-btn pause-link">⏸ Pause checks (stop all requests)</button>
   </section>
 
   <nav class="tabs" id="tabs">
