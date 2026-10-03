@@ -184,6 +184,24 @@ body {
   cursor: default;
 }
 
+.secondary-btn {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.secondary-btn:hover {
+  background: var(--bg-subtle);
+}
+.secondary-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .tabs {
   display: flex;
   overflow-x: auto;

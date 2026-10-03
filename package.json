@@ -1,0 +1,10 @@
+{
+  "name": "ig-unfollow-tracker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Chrome MV3 extension that tracks who unfollows you on Instagram.",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

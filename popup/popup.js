@@ -296,6 +296,7 @@ const ATTEMPT_SKIP_LABEL = {
   "already-running": "already running",
   "too-soon": "cooldown active",
   paused: "checks paused",
+  "no-username": "no username set",
 };
 
 /**

@@ -30,8 +30,13 @@
 
   <section class="field-group">
     <label for="username">Your Instagram username</label>
-    <input type="text" id="username" placeholder="e.g. yourusername" autocomplete="off" />
-    <p class="hint">The account whose followers/following you want tracked (must be the account you're logged into in this browser).</p>
+    <input type="text" id="username" placeholder="e.g. yourusername" autocomplete="off" maxlength="30" />
+    <p class="hint">
+      The account whose followers/following you want tracked (must be the account you're
+      logged into in this browser). A leading "@" or a pasted profile URL is fine — it's
+      stripped automatically.
+    </p>
+    <p class="error-hint" id="usernameError" hidden></p>
   </section>
 
   <section class="field-group">

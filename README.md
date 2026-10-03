@@ -28,7 +28,13 @@ create that session itself; it just uses the one you already have.
 2. Go to `chrome://extensions`, enable **Developer mode** (top right), click
    **Load unpacked**, and select this folder.
 3. Click the extension icon → the gear ⚙ icon (or right-click the icon →
-   Options) → enter your Instagram username → **Save**.
+   Options) → enter your Instagram username → **Save**. A leading "@" or a
+   pasted profile URL is stripped automatically; anything that still isn't a
+   valid Instagram handle (letters, numbers, periods, underscores, 1–30
+   chars) is rejected with an inline error instead of being saved. Until a
+   valid username is saved, both automatic and manual checks are skipped
+   cleanly (logged as "no username set" in the attempt log) rather than
+   failing with an error.
 4. Click **Check now** in the popup for the first baseline snapshot. The
    first check has nothing to compare against, so it won't show any
    "unfollowed you" yet — that shows up starting from the *second* check.

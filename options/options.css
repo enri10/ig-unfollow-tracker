@@ -67,6 +67,12 @@ input[type="number"] {
   margin: 4px 0 0;
 }
 
+.error-hint {
+  font-size: 11.5px;
+  color: #b0264a;
+  margin: 6px 0 0;
+}
+
 .actions {
   display: flex;
   align-items: center;
