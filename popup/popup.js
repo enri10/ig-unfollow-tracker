@@ -1,5 +1,5 @@
 import * as storage from "../lib/storage.js";
-import { formatDateTime, formatDate, formatRelativeDay, formatTime, MIN_CHECK_INTERVAL_MINUTES } from "../lib/utils.js";
+import { formatDateTime, formatDate, formatRelativeDay, formatTime, MIN_CHECK_INTERVAL_MINUTES, isPartialRunFresh } from "../lib/utils.js";
 import { DAILY_ALARM, setChecksPaused } from "../lib/scheduler.js";
 
 const ERROR_MESSAGES = {
@@ -292,6 +292,14 @@ const ATTEMPT_ERROR_LABEL = {
   UNKNOWN_ERROR: "error",
 };
 
+// Which request a failure came from — tells "the profile lookup was refused"
+// apart from "the followers list was", which need different fixes.
+const ATTEMPT_STAGE_LABEL = {
+  profile: "profile lookup",
+  followers: "followers list",
+  following: "following list",
+};
+
 const ATTEMPT_SKIP_LABEL = {
   "already-running": "already running",
   "too-soon": "cooldown active",
@@ -309,7 +317,10 @@ function attemptLine(entry) {
   const label = ATTEMPT_OUTCOME_LABEL[entry.outcome] || entry.outcome;
   let detail = "";
   if (entry.outcome === "error") {
-    detail = ` (${ATTEMPT_ERROR_LABEL[entry.errorType] || entry.errorType})`;
+    const parts = [ATTEMPT_ERROR_LABEL[entry.errorType] || entry.errorType];
+    if (entry.stage) parts.push(ATTEMPT_STAGE_LABEL[entry.stage] || entry.stage);
+    if (entry.status) parts.push(`HTTP ${entry.status}`);
+    detail = ` (${parts.join(" · ")})`;
   } else if (entry.outcome === "skipped") {
     detail = ` (${ATTEMPT_SKIP_LABEL[entry.reason] || entry.reason})`;
   } else if (entry.outcome === "success" && entry.lostFollowerCount > 0) {
@@ -366,7 +377,7 @@ async function loadAndRender() {
   // Minimum-gap cooldown: a hard floor, not just a suggestion, so repeated
   // clicking can't itself look like automated abuse to Instagram (see
   // lib/scheduler.js — this mirrors what it actually enforces).
-  const cooldownUntil = !state.partialRun && state.lastCheck
+  const cooldownUntil = !isPartialRunFresh(state.partialRun) && state.lastCheck
     ? state.lastCheck + MIN_CHECK_INTERVAL_MINUTES * 60 * 1000
     : 0;
   const inCooldown = Date.now() < cooldownUntil;

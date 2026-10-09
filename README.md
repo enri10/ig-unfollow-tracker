@@ -162,6 +162,22 @@ resolve it — only completing that prompt yourself, on Instagram, will.
 - **Unexpected response** → the endpoint shape likely changed; see the
   reconnaissance steps above.
 
+## Half-finished checks expire after 2 hours
+
+When a check is interrupted mid-fetch (usually by a rate limit) it saves a
+checkpoint so the next attempt can continue instead of starting over. That
+checkpoint now expires if it makes no progress for 2 hours
+(`PARTIAL_RUN_MAX_AGE_MS` in `lib/utils.js`). Before this, it never expired:
+a days-old checkpoint was resumed and its old half-list was spliced onto
+fresh pages, giving wrong "unfollowed you" results, and its mere existence
+switched the 30-minute check cooldown off. Starting over costs a few extra
+requests, but only in the case where resuming would have been wrong.
+
+Also fixed: a second successful check on the *same day* used to overwrite
+that day's result with "everyone is a new follower, nobody unfollowed". It
+now diffs against the newest snapshot from an earlier day, so the result
+stays correct however many times you check in a day.
+
 ## Where to see what it actually did
 
 - **Overview → "Last check"** is the last time a check *succeeded*.
@@ -172,3 +188,6 @@ resolve it — only completing that prompt yourself, on Instagram, will.
   regardless of outcome (success, skipped, or failed, with why, and whether
   it was manual or automatic) — this is the place to look when checks are
   failing and there's nothing new in the change history to explain why.
+  Failures also say *which request* was refused and its HTTP status, e.g.
+  "rate limited · followers list · HTTP 429" vs "rate limited · profile
+  lookup · HTTP 429" — those point at different fixes.
