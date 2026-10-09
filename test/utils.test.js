@@ -17,6 +17,8 @@ import {
   formatDate,
   formatRelativeDay,
   formatTime,
+  isPartialRunFresh,
+  PARTIAL_RUN_MAX_AGE_MS,
 } from "../lib/utils.js";
 
 test("clamp keeps values inside [min, max]", () => {
@@ -102,4 +104,17 @@ test("formatRelativeDay reports Today/Yesterday relative to now", () => {
   const now = Date.now();
   assert.equal(formatRelativeDay(now), "Today");
   assert.equal(formatRelativeDay(now - 24 * 60 * 60 * 1000), "Yesterday");
+});
+
+test("isPartialRunFresh: only a recently-progressing checkpoint is resumable", () => {
+  const now = 1_000_000_000_000;
+  assert.equal(isPartialRunFresh(null, now), false);
+  assert.equal(isPartialRunFresh(undefined, now), false);
+  // Checkpoints saved before `savedAt` existed have no timestamp: stale by definition.
+  assert.equal(isPartialRunFresh({ stage: "followers" }, now), false);
+  assert.equal(isPartialRunFresh({ savedAt: now - 60_000 }, now), true);
+  assert.equal(isPartialRunFresh({ savedAt: now - PARTIAL_RUN_MAX_AGE_MS }, now), true);
+  assert.equal(isPartialRunFresh({ savedAt: now - PARTIAL_RUN_MAX_AGE_MS - 1 }, now), false);
+  // The scenario that motivated expiry: a checkpoint left behind days ago.
+  assert.equal(isPartialRunFresh({ savedAt: now - 3 * 24 * 3600 * 1000 }, now), false);
 });
