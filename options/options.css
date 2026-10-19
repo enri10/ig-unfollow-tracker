@@ -1,3 +1,11 @@
+/* The HTML `hidden` attribute is only a browser-default `display:none`, which
+   any author rule with its own `display` (.error-banner, .paused-banner,
+   .pause-link, ...) silently overrides — so "hidden" banners were always
+   showing. Make `hidden` win unconditionally. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   max-width: 520px;
   margin: 32px auto;

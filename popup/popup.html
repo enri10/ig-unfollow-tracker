@@ -40,6 +40,7 @@
       </div>
     </div>
     <p class="count-mismatch-note" id="countMismatchNote" hidden></p>
+    <button id="importBtn" class="import-btn">⬆ Import Instagram data &amp; see full lists</button>
     <div class="meta-row">
       <span id="lastCheckText">Last check: never</span>
       <button id="checkNowBtn" class="primary-btn">Check now</button>
@@ -49,17 +50,17 @@
 
   <nav class="tabs" id="tabs">
     <button class="tab active" data-tab="lost">Unfollowed you</button>
+    <button class="tab" data-tab="notBack">Not following back</button>
     <button class="tab" data-tab="newFollowers">New followers</button>
     <button class="tab" data-tab="lostFollowing">You unfollowed</button>
     <button class="tab" data-tab="newFollowing">New follows</button>
-    <button class="tab" data-tab="notBack">Not following back</button>
     <button class="tab" data-tab="history">History</button>
   </nav>
 
   <main class="content">
     <div id="panel-lost" class="panel active">
       <ul class="user-list" id="list-lost"></ul>
-      <p class="empty-state" id="empty-lost">No changes yet — run a check to get started.</p>
+      <p class="empty-state" id="empty-lost">No data yet — click “Import Instagram data” above (or run a check once Instagram allows it).</p>
     </div>
     <div id="panel-newFollowers" class="panel">
       <ul class="user-list" id="list-newFollowers"></ul>

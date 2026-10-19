@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IG Unfollow Tracker — Lists &amp; import</title>
+  <link rel="stylesheet" href="import.css" />
+</head>
+<body>
+  <header class="header">
+    <span class="brand-dot"></span>
+    <span class="brand-name">IG Unfollow Tracker</span>
+  </header>
+
+  <main class="page">
+    <section class="card" id="listsCard">
+      <div class="summary" id="summary"></div>
+
+      <nav class="tabs" id="tabs" role="tablist">
+        <button class="tab active" role="tab" data-tab="notBack">Not following back <span class="count" id="count-notBack">0</span></button>
+        <button class="tab" role="tab" data-tab="lost">Unfollowed you <span class="count" id="count-lost">0</span></button>
+        <button class="tab" role="tab" data-tab="newFollowers">New followers <span class="count" id="count-newFollowers">0</span></button>
+      </nav>
+
+      <div class="toolbar">
+        <input type="search" id="filter" placeholder="Filter by username…" autocomplete="off" />
+        <label class="sort" id="sortWrap">Sort
+          <select id="sort">
+            <option value="oldest">Followed longest ago first</option>
+            <option value="newest">Followed most recently first</option>
+            <option value="az">A–Z</option>
+          </select>
+        </label>
+      </div>
+
+      <p class="tab-note" id="tabNote"></p>
+      <ul class="user-list" id="list"></ul>
+      <p class="empty" id="empty"></p>
+    </section>
+
+    <section class="card" id="importCard">
+      <h2>Import your Instagram data</h2>
+      <p class="lead">
+        This reads the file Instagram gives you when you export your own data. It sends <strong>nothing</strong>
+        to Instagram, so it can't trigger rate limits or warnings on your account.
+      </p>
+
+      <details id="howTo" open>
+        <summary>How to get the file (about 2 minutes to request)</summary>
+        <ol>
+          <li>On instagram.com: <strong>More → Settings → Meta Account → Your information and permissions → Export your information</strong>.</li>
+          <li><strong>Create export</strong> → pick your profile → <strong>Export to device</strong>.</li>
+          <li><strong>Customize information</strong> → tick only <strong>Followers and following</strong>.</li>
+          <li>Date range: <strong>All time</strong>. Format: <strong>JSON</strong> (not HTML). Then <strong>Start export</strong>.</li>
+          <li>Instagram emails you when it's ready — for just followers and following that's usually minutes, though Instagram says it can take longer. Download the <strong>.zip</strong> (available for 4 days).</li>
+        </ol>
+        <p class="hint">Menu names change now and then; the “Export your information” tool is the part to look for. The export shows your lists as of the moment Instagram prepared it.</p>
+      </details>
+
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop your Instagram export">
+        <div class="drop-title">Drop the .zip here</div>
+        <div class="drop-sub">or <button type="button" class="link" id="pick">choose files</button> — the whole .zip, or just <code>followers_1.json</code> + <code>following.json</code></div>
+        <input type="file" id="file" accept=".zip,.json,.html" multiple hidden />
+      </div>
+
+      <div class="status" id="status" role="status" aria-live="polite" hidden></div>
+    </section>
+  </main>
+
+  <script type="module" src="import.js"></script>
+</body>
+</html>

@@ -1,3 +1,11 @@
+/* The HTML `hidden` attribute is only a browser-default `display:none`, which
+   any author rule with its own `display` (.error-banner, .paused-banner,
+   .pause-link, ...) silently overrides — so "hidden" banners were always
+   showing. Make `hidden` win unconditionally. */
+[hidden] {
+  display: none !important;
+}
+
 :root {
   --pink: #e1306c;
   --purple: #833ab4;
@@ -270,6 +278,16 @@ body {
   flex-shrink: 0;
 }
 
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #c9b3e6, #f2a3c0);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+
 .user-meta {
   min-width: 0;
 }
@@ -395,4 +413,21 @@ body {
 }
 .attempt-log-list li:last-child {
   border-bottom: none;
+}
+
+.import-btn {
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  background: #fff;
+  color: var(--pink);
+  border: 1.5px solid var(--pink);
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.import-btn:hover {
+  background: #fff5f9;
 }

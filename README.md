@@ -13,6 +13,43 @@ browser's *existing* Instagram session — the same cookies already present
 because you're normally logged into instagram.com in that browser — the same
 trust model as any extension that reads Gmail while you're logged into Gmail.
 
+## Import from Instagram's own data export (recommended)
+
+Live checks read Instagram's private API, which is exactly what gets an
+account rate-limited — in this project's case for weeks, with no way for the
+extension to lift it. **Importing Instagram's official export avoids all of
+that**: nothing is sent to Instagram, so there's nothing to rate-limit or flag.
+
+1. In the popup, click **Import Instagram data & see full lists** (opens a tab).
+2. Follow the steps shown there to request an export of **only “Followers
+   and following”**, **All time**, **JSON** format. Instagram emails you when
+   it's ready (usually minutes for this small a request; Instagram's help page
+   says it can take longer, and the download link lasts 4 days).
+3. Drop the downloaded **.zip** on the page (or just `followers_1.json` +
+   `following.json`). It reads only those files out of the zip — never the rest.
+
+You then get, immediately and with search/sort:
+- **Not following back** — with real “following since” dates from the export.
+- **Unfollowed you** — compared with your previous snapshot (live or imported).
+- **New followers**.
+
+Things to know:
+- The export reflects the moment Instagram *prepared* it, not the moment you
+  download it.
+- Each import is compared with the last snapshot from an *earlier day*; import
+  again whenever you want an update (say, weekly or monthly).
+- The export has no numeric ids, so accounts are matched by username. Someone
+  who changed their handle between two snapshots shows up as one removal plus
+  one new follower.
+- HTML exports work but lack follow dates; choose JSON.
+- The file format was written from Instagram's documented export layout and
+  tested against files built in that layout, not against a real export from
+  your account. If a real file is rejected, the page says what it couldn't
+  find — send that message along and the parser is easy to adjust.
+
+Since this needs no live access, consider turning on **Pause checks** (popup)
+so the extension stops sending any requests to Instagram at all.
+
 ## Why it needs you to be logged in at all
 
 Instagram no longer exposes the actual followers/following *list* (usernames)
@@ -161,6 +198,16 @@ verification prompt. If one exists, waiting or pausing this extension won't
 resolve it — only completing that prompt yourself, on Instagram, will.
 - **Unexpected response** → the endpoint shape likely changed; see the
   reconnaissance steps above.
+
+## "Hidden" banners that were always visible
+
+The popup's "Checks are paused" banner, the stale-error banner and the Pause
+link all had their own CSS `display`, which silently overrides the HTML
+`hidden` attribute — so they were visible permanently, including the
+"paused" banner while checks were *not* paused. `popup.css` and
+`options.css` now start with `[hidden] { display: none !important; }`. Any
+new element that gets a `display` value and is toggled with `.hidden` is
+covered by that rule.
 
 ## Half-finished checks expire after 2 hours
 

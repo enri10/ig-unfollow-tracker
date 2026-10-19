@@ -1,6 +1,7 @@
 import * as storage from "../lib/storage.js";
 import { formatDateTime, formatDate, formatRelativeDay, formatTime, MIN_CHECK_INTERVAL_MINUTES, isPartialRunFresh } from "../lib/utils.js";
 import { DAILY_ALARM, setChecksPaused } from "../lib/scheduler.js";
+import { userRow } from "../lib/ui.js";
 
 const ERROR_MESSAGES = {
   NOT_LOGGED_IN: "You're not logged into Instagram in this browser. Log in at instagram.com, then try again.",
@@ -49,44 +50,8 @@ const LIST_TABS = {
 // Tabs that only have data when settings.trackFollowing is on (see options).
 // Cached across loadAndRender calls so the history search handler, which
 // re-renders independently, can use the same value without refetching settings.
-const FOLLOWING_ONLY_TABS = ["lostFollowing", "newFollowing", "notBack"];
+const FOLLOWING_ONLY_TABS = ["lostFollowing", "newFollowing"];
 let trackFollowingEnabled = false;
-
-/**
- * @param {object} user
- * @param {string} [caption] - overrides the second line (defaults to fullName).
- *   Used e.g. by the "not following back" list to show "Following since …"
- *   instead, since that's what makes its chronological order legible.
- */
-function userRow(user, caption) {
-  const li = document.createElement("li");
-  const a = document.createElement("a");
-  a.className = "user-row";
-  a.href = `https://www.instagram.com/${encodeURIComponent(user.username)}/`;
-  a.target = "_blank";
-  a.rel = "noopener noreferrer";
-
-  const img = document.createElement("img");
-  img.className = "avatar";
-  img.loading = "lazy";
-  img.referrerPolicy = "no-referrer";
-  img.src = user.profilePicUrl || "";
-  img.alt = "";
-
-  const meta = document.createElement("div");
-  meta.className = "user-meta";
-  const uname = document.createElement("div");
-  uname.className = "username";
-  uname.textContent = `@${user.username}`;
-  const full = document.createElement("div");
-  full.className = "full-name";
-  full.textContent = caption ?? (user.fullName || "");
-  meta.append(uname, full);
-
-  a.append(img, meta);
-  li.append(a);
-  return li;
-}
 
 /** Caption for the "not following back" list: how long they've been followed, oldest-first. */
 function followingSinceCaption(user) {
@@ -244,7 +209,8 @@ function showError(error, state, dailyAlarmAt) {
     els.errorText.textContent =
       `Instagram has rate-limited this session repeatedly, even after waiting longer each time. ` +
       `Automatic retries are now paused rather than keep trying — the next attempt will be the regular once-daily check, around ${when}. ` +
-      `You can still click "Check now" yourself, but doing that again right now carries real risk of extending the block further.`;
+      `You can still click "Check now" yourself, but doing that again right now carries real risk of extending the block further. ` +
+      `“Import Instagram data” (below) gives you the same lists without contacting Instagram at all.`;
   } else if (error.type === "RATE_LIMITED" && state?.nextRetryAt) {
     const when = formatDateTime(state.nextRetryAt);
     els.errorText.textContent =
@@ -358,21 +324,29 @@ async function loadAndRender() {
   ]);
 
   trackFollowingEnabled = Boolean(settings.trackFollowing);
-  applyFeatureVisibility(trackFollowingEnabled);
+  // A following list exists either because live tracking of it is on, or because
+  // the latest data came from an Instagram export (which always includes it).
+  const hasFollowingData = trackFollowingEnabled || latestDiff?.source === "import";
+  applyFeatureVisibility(hasFollowingData);
 
   const paused = Boolean(settings.checksPaused);
   els.pausedBanner.hidden = !paused;
   els.pauseChecksBtn.hidden = paused;
   // The paused banner already says everything that matters; showing the
   // (likely stale, pre-pause) error banner underneath it too is just noise.
-  if (!paused) {
+  // Likewise, a failed *live* check is old news once an import has since
+  // given fresh data (it stays visible in the attempts log).
+  const supersededByImport = latestDiff?.source === "import" && latestDiff.generatedAt > (state.lastError?.at || 0);
+  if (!paused && !supersededByImport) {
     showError(state.lastError, state, dailyAlarm?.scheduledTime);
   } else {
     els.errorBanner.hidden = true;
   }
   els.setupNotice.hidden = Boolean(settings.username);
   renderAttemptLog(attemptLog);
-  els.lastCheckText.textContent = `Last check: ${formatDateTime(state.lastCheck)}`;
+  els.lastCheckText.textContent = latestDiff?.source === "import"
+    ? `Last import: ${formatDateTime(latestDiff.generatedAt)}`
+    : `Last check: ${formatDateTime(state.lastCheck)}`;
 
   // Minimum-gap cooldown: a hard floor, not just a suggestion, so repeated
   // clicking can't itself look like automated abuse to Instagram (see
@@ -399,6 +373,9 @@ async function loadAndRender() {
   renderList("newFollowers", latestDiff?.newFollowers);
   renderList("lostFollowing", latestDiff?.lostFollowing);
   renderList("newFollowing", latestDiff?.newFollowing);
+  document.getElementById("empty-notBack").textContent = hasFollowingData
+    ? "Everyone you follow follows you back."
+    : "No following list yet — click “Import Instagram data” above to see who doesn't follow you back.";
   renderList("notBack", latestDiff?.notFollowingBack, followingSinceCaption);
   renderHistory(historyDiffs);
 
@@ -440,6 +417,11 @@ els.tabs.addEventListener("click", (e) => {
 });
 
 els.checkNowBtn.addEventListener("click", handleCheckNow);
+
+// A tab, not a popup: Chrome closes a popup as soon as a file picker opens.
+document.getElementById("importBtn").addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("import/import.html") });
+});
 
 els.pauseChecksBtn.addEventListener("click", async () => {
   await setChecksPaused(true);
