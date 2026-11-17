@@ -218,6 +218,11 @@ function showError(error, state, dailyAlarmAt) {
       `It'll retry automatically around ${when}. Clicking "Check now" before then risks extending the block, so it's best to just wait.`;
   } else {
     els.errorText.textContent = ERROR_MESSAGES[error.type] || error.message || FALLBACK_ERROR_MESSAGE;
+    // What Instagram actually sent back, so an "unexpected response" can be diagnosed from a screenshot.
+    if (error.detail) {
+      const where = error.stage ? ` (${error.stage})` : "";
+      els.errorText.textContent += ` — Technical detail${where}: ${error.detail}`;
+    }
   }
   els.errorBanner.hidden = false;
 }
