@@ -209,6 +209,18 @@ link all had their own CSS `display`, which silently overrides the HTML
 new element that gets a `display` value and is toggled with `.hidden` is
 covered by that rule.
 
+## The profile lookup that stopped working
+
+The first request of a live check used to be a profile lookup
+(`/api/v1/users/web_profile_info/`), only to find the account's numeric id.
+In November 2026 Instagram started answering it with an HTML "404 Page Not
+Found" (found via the "Technical detail" line the popup now shows), so every
+check failed at its first request. The id is already in the browser — the
+`ds_user_id` cookie set at login — so it is now read from there and the lookup
+is skipped (it remains only as a fallback if that cookie is missing). One
+side effect: without the lookup there is no Instagram-reported follower
+count, so the "Instagram shows X, we counted Y" note won't appear.
+
 ## Half-finished checks expire after 2 hours
 
 When a check is interrupted mid-fetch (usually by a rate limit) it saves a

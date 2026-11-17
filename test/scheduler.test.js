@@ -70,3 +70,47 @@ test("performCheck enforces the minimum gap between checks", async () => {
   assert.equal(result.skipped, true);
   assert.equal(result.reason, "too-soon");
 });
+
+// ---- which request goes out first ----
+
+function installInstagramMock({ cookies }) {
+  const requests = [];
+  chrome.cookies = { get: async ({ name }) => (name in cookies ? { value: cookies[name] } : null) };
+  // The followers request answers 429 so the run stops right there, which keeps
+  // these tests off IndexedDB while still showing exactly what was requested.
+  globalThis.fetch = async (url) => {
+    requests.push(new URL(url).pathname);
+    return new Response("", { status: 429 });
+  };
+  return requests;
+}
+
+test("uses the id from the login cookie and never calls the profile lookup", async () => {
+  await chrome.storage.local.set({ settings: { username: "me" } });
+  const requests = installInstagramMock({ cookies: { sessionid: "s", csrftoken: "c", ds_user_id: "12345" } });
+
+  const result = await performCheck({ manual: true });
+
+  assert.equal(result.error.type, "RATE_LIMITED");
+  assert.deepEqual(requests, ["/api/v1/friendships/12345/followers/"], "first and only request is the followers list");
+  const { attemptLog } = await chrome.storage.local.get("attemptLog");
+  assert.equal(attemptLog[0].stage, "followers");
+});
+
+test("falls back to the profile lookup only when the id cookie is missing", async () => {
+  await chrome.storage.local.set({ settings: { username: "me" } });
+  const requests = installInstagramMock({ cookies: { sessionid: "s", csrftoken: "c" } });
+
+  await performCheck({ manual: true });
+
+  assert.deepEqual(requests, ["/api/v1/users/web_profile_info/"]);
+});
+
+test("ignores a malformed id cookie instead of requesting /friendships/garbage/", async () => {
+  await chrome.storage.local.set({ settings: { username: "me" } });
+  const requests = installInstagramMock({ cookies: { sessionid: "s", csrftoken: "c", ds_user_id: "not-a-number" } });
+
+  await performCheck({ manual: true });
+
+  assert.deepEqual(requests, ["/api/v1/users/web_profile_info/"]);
+});
